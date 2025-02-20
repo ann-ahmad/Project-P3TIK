@@ -8,6 +8,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 import numpy as np
 from datetime import datetime
+from sklearn.metrics import mean_absolute_percentage_error, mean_absolute_error, mean_squared_error, r2_score
 
 # Set page config
 st.set_page_config(
@@ -56,7 +57,7 @@ def train_models(df):
         'Harga per Megapixel'
     ]
 
-    # Process new cameras
+    # Process and split new cameras data
     df_new_encoded = df_new.copy()
     df_new_encoded['Brand_encoded'] = le_brand.fit_transform(df_new['Merek'])
     df_new_encoded['Category_encoded'] = le_category.fit_transform(df_new['Kategori'])
@@ -64,8 +65,9 @@ def train_models(df):
 
     X_new = df_new_encoded[features]
     y_new = df_new_encoded['Harga']
+    X_new_train, X_new_test, y_new_train, y_new_test = train_test_split(X_new, y_new, test_size=0.2, random_state=42)
 
-    # Process used cameras
+    # Process and split used cameras data
     df_used_encoded = df_used.copy()
     df_used_encoded['Brand_encoded'] = le_brand.fit_transform(df_used['Merek'])
     df_used_encoded['Category_encoded'] = le_category.fit_transform(df_used['Kategori'])
@@ -73,12 +75,15 @@ def train_models(df):
 
     X_used = df_used_encoded[features]
     y_used = df_used_encoded['Harga']
+    X_used_train, X_used_test, y_used_train, y_used_test = train_test_split(X_used, y_used, test_size=0.2, random_state=42)
 
     # Scale features
     scaler_new = StandardScaler()
     scaler_used = StandardScaler()
-    X_new_scaled = scaler_new.fit_transform(X_new)
-    X_used_scaled = scaler_used.fit_transform(X_used)
+    X_new_train_scaled = scaler_new.fit_transform(X_new_train)
+    X_new_test_scaled = scaler_new.transform(X_new_test)
+    X_used_train_scaled = scaler_used.fit_transform(X_used_train)
+    X_used_test_scaled = scaler_used.transform(X_used_test)
 
     # Train models
     model_new = xgb.XGBRegressor(
@@ -100,8 +105,27 @@ def train_models(df):
         random_state=42
     )
 
-    model_new.fit(X_new_scaled, y_new)
-    model_used.fit(X_used_scaled, y_used)
+    # Fit models
+    model_new.fit(X_new_train_scaled, y_new_train)
+    model_used.fit(X_used_train_scaled, y_used_train)
+
+    # Calculate metrics for new cameras
+    y_new_pred = model_new.predict(X_new_test_scaled)
+    new_metrics = {
+        'MAPE': mean_absolute_percentage_error(y_new_test, y_new_pred),
+        'MAE': mean_absolute_error(y_new_test, y_new_pred),
+        'MSE': mean_squared_error(y_new_test, y_new_pred),
+        'R2': r2_score(y_new_test, y_new_pred)
+    }
+
+    # Calculate metrics for used cameras
+    y_used_pred = model_used.predict(X_used_test_scaled)
+    used_metrics = {
+        'MAPE': mean_absolute_percentage_error(y_used_test, y_used_pred),
+        'MAE': mean_absolute_error(y_used_test, y_used_pred),
+        'MSE': mean_squared_error(y_used_test, y_used_pred),
+        'R2': r2_score(y_used_test, y_used_pred)
+    }
 
     return {
         'model_new': model_new,
@@ -111,7 +135,9 @@ def train_models(df):
         'le_brand': le_brand,
         'le_category': le_category,
         'le_format': le_format,
-        'features': features
+        'features': features,
+        'new_metrics': new_metrics,
+        'used_metrics': used_metrics
     }
 
 df = load_data()
@@ -269,16 +295,18 @@ else:
             'Format_encoded': [models_data['le_format'].transform([format_type])[0]],
             'Tahun Rilis': [year],
             'Umur Kamera': [camera_age],
-            'Harga per Megapixel': [0]  #Updated after prediction
+            'Harga per Megapixel': [0]  # Updated after prediction
         })
 
         # Select appropriate model and scaler based on condition
         if condition == 'Baru':
             model = models_data['model_new']
             scaler = models_data['scaler_new']
+            metrics = models_data['new_metrics']
         else:
             model = models_data['model_used']
             scaler = models_data['scaler_used']
+            metrics = models_data['used_metrics']
 
         # Scale input data
         input_scaled = scaler.transform(input_data[models_data['features']])
@@ -289,8 +317,25 @@ else:
         # Display prediction
         st.success(f"Prediksi Harga: {format_price(predicted_price)}")
 
+        # Display model metrics
+        st.subheader("Metrik Performa Model")
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric("MAPE", f"{metrics['MAPE']*100:.2f}%")
+            st.caption("Mean Absolute Percentage Error")
+        with col2:
+            st.metric("MAE", f"Rp {metrics['MAE']:,.0f}")
+            st.caption("Mean Absolute Error")
+        with col3:
+            st.metric("MSE", f"Rp {metrics['MSE']:,.0f}")
+            st.caption("Mean Squared Error")
+        with col4:
+            st.metric("R²", f"{metrics['R2']:.3f}")
+            st.caption("Coefficient of Determination")
+
         # Show similar cameras
-        st.subheader("Kamera dengan harag serupa:")
+        st.subheader("Kamera Similar")
         similar_cameras = df[
             (df['Merek'] == brand) &
             (df['Kategori'] == category) &
