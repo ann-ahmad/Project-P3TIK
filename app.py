@@ -47,45 +47,49 @@ def train_models(df):
 
     # Create label encoders
     le_brand = LabelEncoder()
+    le_model = LabelEncoder()  # Added Model encoder
     le_category = LabelEncoder()
     le_format = LabelEncoder()
 
+    # Updated features list to match ML-only version
     features = [
-        'Brand_encoded', 'Category_encoded',
+        'Brand_encoded', 'Model_encoded', 'Category_encoded',  # Added Model_encoded
         'Jumlah piksel', 'ISO min', 'ISO max', 'ISO Range',
         'fps', 'Format_encoded', 'Tahun Rilis', 'Umur Kamera',
         'Harga per Megapixel'
     ]
 
-    # Process and split new cameras data
+    # Process new cameras data
     df_new_encoded = df_new.copy()
     df_new_encoded['Brand_encoded'] = le_brand.fit_transform(df_new['Merek'])
+    df_new_encoded['Model_encoded'] = le_model.fit_transform(df_new['Model'])  # Added Model encoding
     df_new_encoded['Category_encoded'] = le_category.fit_transform(df_new['Kategori'])
     df_new_encoded['Format_encoded'] = le_format.fit_transform(df_new['Format'])
 
     X_new = df_new_encoded[features]
     y_new = df_new_encoded['Harga']
-    X_new_train, X_new_test, y_new_train, y_new_test = train_test_split(X_new, y_new, test_size=0.2, random_state=42)
 
-    # Process and split used cameras data
+    # Process used cameras data
     df_used_encoded = df_used.copy()
     df_used_encoded['Brand_encoded'] = le_brand.fit_transform(df_used['Merek'])
+    df_used_encoded['Model_encoded'] = le_model.fit_transform(df_used['Model'])  # Added Model encoding
     df_used_encoded['Category_encoded'] = le_category.fit_transform(df_used['Kategori'])
     df_used_encoded['Format_encoded'] = le_format.fit_transform(df_used['Format'])
 
     X_used = df_used_encoded[features]
     y_used = df_used_encoded['Harga']
-    X_used_train, X_used_test, y_used_train, y_used_test = train_test_split(X_used, y_used, test_size=0.2, random_state=42)
 
-    # Scale features
+    # Scale features before splitting (changed to match ML-only version)
     scaler_new = StandardScaler()
     scaler_used = StandardScaler()
-    X_new_train_scaled = scaler_new.fit_transform(X_new_train)
-    X_new_test_scaled = scaler_new.transform(X_new_test)
-    X_used_train_scaled = scaler_used.fit_transform(X_used_train)
-    X_used_test_scaled = scaler_used.transform(X_used_test)
+    X_new_scaled = scaler_new.fit_transform(X_new)
+    X_used_scaled = scaler_used.fit_transform(X_used)
 
-    # Train models
+    # Split scaled data
+    X_new_train, X_new_test, y_new_train, y_new_test = train_test_split(X_new_scaled, y_new, test_size=0.2, random_state=42)
+    X_used_train, X_used_test, y_used_train, y_used_test = train_test_split(X_used_scaled, y_used, test_size=0.2, random_state=42)
+
+    # Train models with same parameters as ML-only version
     model_new = xgb.XGBRegressor(
         n_estimators=200,
         learning_rate=0.1,
@@ -106,11 +110,11 @@ def train_models(df):
     )
 
     # Fit models
-    model_new.fit(X_new_train_scaled, y_new_train)
-    model_used.fit(X_used_train_scaled, y_used_train)
+    model_new.fit(X_new_train, y_new_train)
+    model_used.fit(X_used_train, y_used_train)
 
-    # Calculate metrics for new cameras
-    y_new_pred = model_new.predict(X_new_test_scaled)
+    # Calculate metrics
+    y_new_pred = model_new.predict(X_new_test)
     new_metrics = {
         'MAPE': mean_absolute_percentage_error(y_new_test, y_new_pred),
         'MAE': mean_absolute_error(y_new_test, y_new_pred),
@@ -118,8 +122,7 @@ def train_models(df):
         'R2': r2_score(y_new_test, y_new_pred)
     }
 
-    # Calculate metrics for used cameras
-    y_used_pred = model_used.predict(X_used_test_scaled)
+    y_used_pred = model_used.predict(X_used_test)
     used_metrics = {
         'MAPE': mean_absolute_percentage_error(y_used_test, y_used_pred),
         'MAE': mean_absolute_error(y_used_test, y_used_pred),
@@ -133,13 +136,14 @@ def train_models(df):
         'scaler_new': scaler_new,
         'scaler_used': scaler_used,
         'le_brand': le_brand,
+        'le_model': le_model,  # Added Model encoder to return dict
         'le_category': le_category,
         'le_format': le_format,
         'features': features,
         'new_metrics': new_metrics,
         'used_metrics': used_metrics
     }
-
+    
 df = load_data()
 models_data = train_models(df)
 
@@ -260,32 +264,35 @@ else:
     col1, col2 = st.columns(2)
 
     with col1:
-        brand = st.selectbox("Merek", sorted(df['Merek'].unique()))
-        category = st.selectbox("Kategori", sorted(df['Kategori'].unique()))
-        condition = st.selectbox("Kondisi", sorted(df['Kondisi'].unique()))
-        format_type = st.selectbox("Format", sorted(df['Format'].unique()))
+        brand = st.selectbox("Merek", df['Merek'].unique())  # Removed sorting to match ML-only version
+        model = st.selectbox("Model", df[df['Merek'] == brand]['Model'].unique())  # Added Model selection
+        category = st.selectbox("Kategori", df['Kategori'].unique())
+        condition = st.selectbox("Kondisi", df['Kondisi'].unique())
+        format_type = st.selectbox("Format", df['Format'].unique())
 
     with col2:
         megapixels = st.selectbox("Jumlah Piksel (MP)", 
-                                 sorted(df['Jumlah piksel'].unique()))
+                                 df['Jumlah piksel'].unique())
         iso_min = st.selectbox("ISO Minimum",
-                              sorted(df['ISO min'].unique()))
+                              df['ISO min'].unique())
         iso_max = st.selectbox("ISO Maximum",
-                              sorted(df['ISO max'].unique()))
+                              df['ISO max'].unique())
         fps = st.selectbox("FPS",
-                          sorted(df['fps'].unique()))
+                          df['fps'].unique())
         year = st.selectbox("Tahun Rilis",
-                           sorted(df['Tahun Rilis'].unique()))
+                           df['Tahun Rilis'].unique())
 
     if st.button("Prediksi Harga"):
         # Calculate derived features
         current_year = datetime.now().year
         camera_age = current_year - year
         iso_range = iso_max - iso_min
+        price_per_mp = 0  # Will be updated after prediction
 
-        # Create input data
+        # Create input data with Model encoding
         input_data = pd.DataFrame({
             'Brand_encoded': [models_data['le_brand'].transform([brand])[0]],
+            'Model_encoded': [models_data['le_model'].transform([model])[0]],  # Added Model encoding
             'Category_encoded': [models_data['le_category'].transform([category])[0]],
             'Jumlah piksel': [megapixels],
             'ISO min': [iso_min],
@@ -295,10 +302,10 @@ else:
             'Format_encoded': [models_data['le_format'].transform([format_type])[0]],
             'Tahun Rilis': [year],
             'Umur Kamera': [camera_age],
-            'Harga per Megapixel': [0]  # Updated after prediction
+            'Harga per Megapixel': [price_per_mp]
         })
 
-        # Select appropriate model and scaler based on condition
+        # Select appropriate model and scaler
         if condition == 'Baru':
             model = models_data['model_new']
             scaler = models_data['scaler_new']
@@ -311,8 +318,8 @@ else:
         # Scale input data
         input_scaled = scaler.transform(input_data[models_data['features']])
 
-        # Make prediction
-        predicted_price = model.predict(input_scaled)[0]
+        # Make prediction and ensure non-negative
+        predicted_price = max(0, model.predict(input_scaled)[0])  # Added max(0, ...) to prevent negative prices
 
         # Display prediction
         st.success(f"Prediksi Harga: {format_price(predicted_price)}")
