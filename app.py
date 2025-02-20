@@ -12,7 +12,7 @@ from datetime import datetime
 # Set page config
 st.set_page_config(
     page_title="Dashboard Harga Kamera Indonesia",
-    page_icon="/api/placeholder/32/32",
+    page_icon="https://i.pinimg.com/1200x/2c/64/d2/2c64d2b0c32c1d17bf8f87863b34d367.jpg",
     layout="wide"
 )
 
@@ -122,7 +122,7 @@ st.sidebar.title("Navigasi")
 page = st.sidebar.radio("Pilih Halaman:", ["Dashboard", "Prediksi Harga"])
 
 if page == "Dashboard":
-    st.image("/api/placeholder/64/64", width=64)
+    st.image("https://i.pinimg.com/1200x/2c/64/d2/2c64d2b0c32c1d17bf8f87863b34d367.jpg", width=64)
     st.title("Dashboard Analisis Data Kamera di Indonesia")
     st.markdown("---")
 
@@ -226,7 +226,7 @@ if page == "Dashboard":
     st.plotly_chart(fig_timeline, use_container_width=True)
 
 else:
-    st.image("/api/placeholder/64/64", width=64)
+    st.image("https://i.pinimg.com/1200x/2c/64/d2/2c64d2b0c32c1d17bf8f87863b34d367.jpg", width=64)
     st.title("Prediksi Harga Kamera")
     st.markdown("---")
 
@@ -234,27 +234,22 @@ else:
     col1, col2 = st.columns(2)
 
     with col1:
-        brand = st.selectbox("Merek", df['Merek'].unique())
-        category = st.selectbox("Kategori", df['Kategori'].unique())
-        condition = st.selectbox("Kondisi", df['Kondisi'].unique())
-        format_type = st.selectbox("Format", df['Format'].unique())
+        brand = st.selectbox("Merek", sorted(df['Merek'].unique()))
+        category = st.selectbox("Kategori", sorted(df['Kategori'].unique()))
+        condition = st.selectbox("Kondisi", sorted(df['Kondisi'].unique()))
+        format_type = st.selectbox("Format", sorted(df['Format'].unique()))
 
     with col2:
-        megapixels = st.number_input("Jumlah Piksel (MP)",
-                                    min_value=float(df['Jumlah piksel'].min()),
-                                    max_value=float(df['Jumlah piksel'].max()))
-        iso_min = st.number_input("ISO Minimum",
-                                 min_value=int(df['ISO min'].min()),
-                                 max_value=int(df['ISO min'].max()))
-        iso_max = st.number_input("ISO Maximum",
-                                 min_value=int(df['ISO max'].min()),
-                                 max_value=int(df['ISO max'].max()))
-        fps = st.number_input("FPS",
-                             min_value=int(df['fps'].min()),
-                             max_value=int(df['fps'].max()))
-        year = st.number_input("Tahun Rilis",
-                              min_value=int(df['Tahun Rilis'].min()),
-                              max_value=int(df['Tahun Rilis'].max()))
+        megapixels = st.selectbox("Jumlah Piksel (MP)", 
+                                 sorted(df['Jumlah piksel'].unique()))
+        iso_min = st.selectbox("ISO Minimum",
+                              sorted(df['ISO min'].unique()))
+        iso_max = st.selectbox("ISO Maximum",
+                              sorted(df['ISO max'].unique()))
+        fps = st.selectbox("FPS",
+                          sorted(df['fps'].unique()))
+        year = st.selectbox("Tahun Rilis",
+                           sorted(df['Tahun Rilis'].unique()))
 
     if st.button("Prediksi Harga"):
         # Calculate derived features
