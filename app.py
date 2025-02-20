@@ -1,3 +1,14 @@
+!pip install streamlit pandas plotly xgboost scikit-learn pillow numpy
+    
+%%writefile requirements.txt
+streamlit==1.24.0
+plotly==5.15.0
+xgboost==1.7.5
+scikit-learn==1.2.2
+pandas==1.5.3
+numpy==1.23.5
+    
+%%writefile app.py
 import streamlit as st
 import pandas as pd
 import plotly.express as px
