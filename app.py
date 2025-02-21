@@ -219,9 +219,9 @@ if page == "Dashboard":
                               text=avg_price_used['Harga'].apply(lambda x: f"Rp{x:,.0f}".replace(',', '.')))
             fig_used.update_traces(textposition='outside')
             st.plotly_chart(fig_used, use_container_width=True)
-
-        st.subheader("Distribusi Harga berdasarkan Tahun Rilis")
             
+        st.subheader("Distribusi Harga berdasarkan Tahun Rilis")
+        
         # Calculate average price by year for both conditions
         year_price_new = df[df['Kondisi'] == 'Baru'].groupby('Tahun Rilis')['Harga'].mean().reset_index()
         year_price_used = df[df['Kondisi'] == 'Bekas'].groupby('Tahun Rilis')['Harga'].mean().reset_index()
@@ -239,7 +239,7 @@ if page == "Dashboard":
                                     title='Trend Harga Rata-rata Kamera Bekas per Tahun',
                                     markers=True)
             st.plotly_chart(fig_year_used, use_container_width=True)
-                
+            
         st.subheader("Distribusi Harga berdasarkan Format Kamera")
         col1, col2 = st.columns(2)
 
@@ -258,7 +258,7 @@ if page == "Dashboard":
                                      text=format_price_used['Harga'].apply(lambda x: f"Rp{x:,.0f}".replace(',', '.')))
             fig_format_used.update_traces(textposition='outside')
             st.plotly_chart(fig_format_used, use_container_width=True)
-                
+            
         st.subheader("Top 10 Kamera Termahal")
         col1, col2 = st.columns(2)
             
@@ -322,7 +322,7 @@ if page == "Dashboard":
                                     names=brand_used.index,
                                     title='Distribusi Merek Kamera Bekas')
             st.plotly_chart(fig_brand_used, use_container_width=True)
-            
+        
         st.subheader("Proporsi Kategori Kamera")
         col1, col2 = st.columns(2)
         
@@ -387,8 +387,8 @@ if page == "Dashboard":
                                    color='Kondisi', title='Trend Harga Rata-rata per Tahun',
                                    markers=True)
         st.plotly_chart(fig_year_compare, use_container_width=True)
-            
-         # Brand distribution comparison
+        
+        # Brand distribution comparison
         st.subheader("Perbandingan Distribusi Merek")
         brand_dist = pd.DataFrame({
             'Baru': df[df['Kondisi'] == 'Baru']['Merek'].value_counts(),
