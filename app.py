@@ -166,7 +166,7 @@ if page == "Dashboard":
     st.markdown("---")
 
     # Second row: Price metrics
-col1, col2, col3 = st.columns(2)
+col1, col2 = st.columns(2)
 
 # Average prices
 with col1:
