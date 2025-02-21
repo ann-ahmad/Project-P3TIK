@@ -489,8 +489,8 @@ else:
         if model and model != "":
             # For selected model, show cameras with similar specs
             similar_cameras = df[
-                (df['Merek'] == camera_data['Merek']) &
-                (df['Kategori'] == camera_data['Kategori']) &
+                (df['Merek'] == brand) &
+                (df['Kategori'] == category) &
                 (df['Kondisi'] == condition) &
                 (df['Model'] != model)  # Exclude the selected model
             ].drop_duplicates(subset=['Model'])
