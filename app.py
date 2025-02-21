@@ -191,9 +191,9 @@ if page == "Dashboard":
 
     # Fungsi untuk membuat dan menampilkan chart dengan ID unik
     def create_and_show_chart(fig, container, idx):
-    fig.update_layout(height=400)  # Menyamakan tinggi semua chart
-    container.plotly_chart(fig, use_container_width=True, key=f"chart_{idx}")
-    
+        fig.update_layout(height=400)  # Menyamakan tinggi semua chart
+        container.plotly_chart(fig, use_container_width=True, key=f"chart_{idx}")
+   
     # Analysis Tabs
     st.subheader("Analisis Data Kamera")
     tabs = st.tabs([
