@@ -335,7 +335,8 @@ else:
             st.metric("MAE", f"Rp{metrics['MAE']:,.0f}".replace(',', '.'))
             st.caption("Mean Absolute Error")
         with col3:
-            st.metric("RMSE", f"Rp{metrics['RMSE']:,.0f}".replace(',', '.'))
+            rmse_millions = metrics['RMSE'] / 1_000_000
+            st.metric("RMSE", f"Rp{rmse_millions:.1f}M")
             st.caption("Root Mean Squared Error")
         with col4:
             st.metric("R²", f"{metrics['R2']:.3f}")
