@@ -484,13 +484,23 @@ else:
             st.metric("R²", f"{metrics['R2']:.3f}")
             st.caption("Coefficient of Determination")
 
-        # Show similar cameras
+        # Show similar cameras with unique models
         st.subheader("Kamera Similar")
-        similar_cameras = df[
-            (df['Merek'] == brand) &
-            (df['Kategori'] == category) &
-            (df['Kondisi'] == condition)
-        ].head()
+        if model and model != "":
+            # For selected model, show cameras with similar specs
+            similar_cameras = df[
+                (df['Merek'] == camera_data['Merek']) &
+                (df['Kategori'] == camera_data['Kategori']) &
+                (df['Kondisi'] == condition) &
+                (df['Model'] != model)  # Exclude the selected model
+            ].drop_duplicates(subset=['Model'])
+        else:
+            # For manual input, show cameras with similar specs
+            price_range = (predicted_price * 0.8, predicted_price * 1.2)
+            similar_cameras = df[
+                (df['Kondisi'] == condition) &
+                (df['Harga'].between(*price_range))
+            ].drop_duplicates(subset=['Model'])
 
         if not similar_cameras.empty:
             st.dataframe(similar_cameras[['Model', 'Harga', 'Jumlah piksel', 'Tahun Rilis']])
