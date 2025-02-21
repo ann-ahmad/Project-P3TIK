@@ -429,6 +429,11 @@ else:
             
         camera_data = df[df['Model'] == model].iloc[0]
 
+        current_year = datetime.now().year
+        camera_age = current_year - camera_data['Tahun Rilis']
+        iso_range = camera_data['ISO max'] - camera_data['ISO min']
+        price_per_mp = camera_data['Harga'] / camera_data['Jumlah piksel']
+
         # Create input data with Model encoding
         input_data = pd.DataFrame({
             'Brand_encoded': [models_data['le_brand'].transform([brand])[0]],
