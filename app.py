@@ -166,28 +166,21 @@ if page == "Dashboard":
     st.markdown("---")
 
     # Second row: Price metrics
-    col1, col2, col3 = st.columns(3)
+col1, col2, col3 = st.columns(3)
 
-    # Average prices
-    with col1:
-        avg_new = df[df['Kondisi'] == 'Baru']['Harga'].mean()
-        avg_used = df[df['Kondisi'] == 'Bekas']['Harga'].mean()
-        st.metric("Rata-rata Harga Kamera Baru", f"Rp {avg_new:,.0f}")
-        st.metric("Rata-rata Harga Kamera Bekas", f"Rp {avg_used:,.0f}")
+# Average prices
+with col1:
+    avg_new = df[df['Kondisi'] == 'Baru']['Harga'].mean()
+    avg_used = df[df['Kondisi'] == 'Bekas']['Harga'].mean()
+    st.metric("Rata-rata Harga Kamera Baru", f"Rp{avg_new:,.0f}".replace(',', '.'))
+    st.metric("Rata-rata Harga Kamera Bekas", f"Rp{avg_used:,.0f}".replace(',', '.'))
 
-    # Highest prices
-    with col2:
-        max_new = df[df['Kondisi'] == 'Baru']['Harga'].max()
-        max_used = df[df['Kondisi'] == 'Bekas']['Harga'].max()
-        st.metric("Harga Tertinggi Kamera Baru", f"Rp {max_new:,.0f}")
-        st.metric("Harga Tertinggi Kamera Bekas", f"Rp {max_used:,.0f}")
-
-    # Lowest prices
-    with col3:
-        min_new = df[df['Kondisi'] == 'Baru']['Harga'].min()
-        min_used = df[df['Kondisi'] == 'Bekas']['Harga'].min()
-        st.metric("Harga Terendah Kamera Baru", f"Rp {min_new:,.0f}")
-        st.metric("Harga Terendah Kamera Bekas", f"Rp {min_used:,.0f}")
+# Highest prices
+with col2:
+    max_new = df[df['Kondisi'] == 'Baru']['Harga'].max()
+    max_used = df[df['Kondisi'] == 'Bekas']['Harga'].max()
+    st.metric("Harga Tertinggi Kamera Baru", f"Rp{max_new:,.0f}".replace(',', '.'))
+    st.metric("Harga Tertinggi Kamera Bekas", f"Rp{max_used:,.0f}".replace(',', '.'))
 
     # Distribution plots row
     st.subheader("Distribusi dan Perbandingan")
@@ -332,10 +325,11 @@ else:
             st.metric("MAPE", f"{metrics['MAPE']*100:.2f}%")
             st.caption("Mean Absolute Percentage Error")
         with col2:
-            st.metric("MAE", f"Rp {metrics['MAE']:,.0f}")
+            st.metric("MAE", f"Rp{metrics['MAE']:,.0f}".replace(',', '.'))
             st.caption("Mean Absolute Error")
         with col3:
-            st.metric("MSE", f"Rp {metrics['MSE']:,.0f}")
+            mse_millions = metrics['MSE'] / 1_000_000
+            st.metric("MSE", f"{mse_millions:.1f}M")
             st.caption("Mean Squared Error")
         with col4:
             st.metric("R²", f"{metrics['R2']:.3f}")
