@@ -154,6 +154,7 @@ page = st.sidebar.radio("Pilih Halaman:", ["Dashboard", "Prediksi Harga"])
 if page == "Dashboard":
     st.image("https://i.pinimg.com/1200x/2c/64/d2/2c64d2b0c32c1d17bf8f87863b34d367.jpg", width=64)
     st.title("Dashboard Analisis Data Kamera di Indonesia")
+    st.write("**Tahun Rilis 2013-2024**")
     st.markdown("---")
 
     col1, col2 = st.columns([1, 2])
