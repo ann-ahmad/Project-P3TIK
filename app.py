@@ -438,7 +438,7 @@ else:
         input_data = pd.DataFrame({
             'Brand_encoded': [models_data['le_brand'].transform([brand])[0]],
             'Model_encoded': [models_data['le_model'].transform([model])[0]],  # Added Model encoding
-            'Category_encoded': [models_data['le_category'].transform([category])[0]],
+            'Category_encoded': [models_data['le_category'].transform([camera_data['Kategori']])[0]],
             'Jumlah piksel': [megapixels],
             'ISO min': [iso_min],
             'ISO max': [iso_max],
