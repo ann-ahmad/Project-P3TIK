@@ -271,7 +271,8 @@ if page == "Dashboard":
             top_new = df[df['Kondisi'] == 'Baru'].nlargest(10, 'Harga')
             fig_top_new = px.bar(top_new, x='Model', y='Harga',
                                  title='10 Kamera Baru Termahal',
-                                 text=top_new['Harga'].apply(lambda x: f"Rp{x:,.0f}".replace(',', '.')))
+                                 text=top_new['Harga'].apply(lambda x: f"Rp{x:,.0f}".replace(',', '.')),
+                                 hover_data=['Merek'])
             fig_top_new.update_traces(textposition='outside')
             create_and_show_chart(fig_top_new, col1, "top_10_new")
                 
@@ -279,7 +280,8 @@ if page == "Dashboard":
             top_used = df[df['Kondisi'] == 'Bekas'].nlargest(10, 'Harga')
             fig_top_used = px.bar(top_used, x='Model', y='Harga',
                                   title='10 Kamera Bekas Termahal',
-                                  text=top_used['Harga'].apply(lambda x: f"Rp{x:,.0f}".replace(',', '.')))
+                                  text=top_used['Harga'].apply(lambda x: f"Rp{x:,.0f}".replace(',', '.')), 
+                                  hover_data=['Merek'])
             fig_top_used.update_traces(textposition='outside')
             create_and_show_chart(fig_top_used, col2, "top_10_used")
 
