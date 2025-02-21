@@ -454,11 +454,11 @@ else:
         if condition == 'Baru':
             model = models_data['model_new']
             scaler = models_data['scaler_new']
-            metrics = models_data['new_metrics']
+            metrics = models_data['metrics_new']
         else:
             model = models_data['model_used']
             scaler = models_data['scaler_used']
-            metrics = models_data['used_metrics']
+            metrics = models_data['metrics_used']
 
         # Scale input data
         input_scaled = scaler.transform(input_data[models_data['features']])
