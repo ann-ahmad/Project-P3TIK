@@ -439,13 +439,13 @@ else:
             'Brand_encoded': [models_data['le_brand'].transform([brand])[0]],
             'Model_encoded': [models_data['le_model'].transform([model])[0]],  # Added Model encoding
             'Category_encoded': [models_data['le_category'].transform([camera_data['Kategori']])[0]],
-            'Jumlah piksel': [megapixels],
-            'ISO min': [iso_min],
-            'ISO max': [iso_max],
+            'Jumlah piksel': [camera_data['Jumlah piksel']],
+            'ISO min': [camera_data['ISO min']],
+            'ISO max': [camera_data['ISO max']],
             'ISO Range': [iso_range],
-            'fps': [fps],
-            'Format_encoded': [models_data['le_format'].transform([format_type])[0]],
-            'Tahun Rilis': [year],
+            'fps': [camera_data['fps']],
+            'Format_encoded': [models_data['le_format'].transform([camera_data['Format']])[0]],
+            'Tahun Rilis': [camera_data['Tahun Rilis']],
             'Umur Kamera': [camera_age],
             'Harga per Megapixel': [price_per_mp]
         })
