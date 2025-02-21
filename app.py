@@ -47,49 +47,49 @@ def train_models(df):
 
     # Create label encoders
     le_brand = LabelEncoder()
-    le_model = LabelEncoder()  # Added Model encoder
+    le_model = LabelEncoder()
     le_category = LabelEncoder()
     le_format = LabelEncoder()
 
-    # Updated features list to match ML-only version
+    # Features list
     features = [
-        'Brand_encoded', 'Model_encoded', 'Category_encoded',  # Added Model_encoded
+        'Brand_encoded', 'Model_encoded', 'Category_encoded',
         'Jumlah piksel', 'ISO min', 'ISO max', 'ISO Range',
         'fps', 'Format_encoded', 'Tahun Rilis', 'Umur Kamera',
         'Harga per Megapixel'
     ]
 
-    # Process new cameras data
+    # Process new cameras
     df_new_encoded = df_new.copy()
     df_new_encoded['Brand_encoded'] = le_brand.fit_transform(df_new['Merek'])
-    df_new_encoded['Model_encoded'] = le_model.fit_transform(df_new['Model'])  # Added Model encoding
+    df_new_encoded['Model_encoded'] = le_model.fit_transform(df_new['Model'])
     df_new_encoded['Category_encoded'] = le_category.fit_transform(df_new['Kategori'])
     df_new_encoded['Format_encoded'] = le_format.fit_transform(df_new['Format'])
 
     X_new = df_new_encoded[features]
     y_new = df_new_encoded['Harga']
 
-    # Process used cameras data
+    # Process used cameras
     df_used_encoded = df_used.copy()
     df_used_encoded['Brand_encoded'] = le_brand.fit_transform(df_used['Merek'])
-    df_used_encoded['Model_encoded'] = le_model.fit_transform(df_used['Model'])  # Added Model encoding
+    df_used_encoded['Model_encoded'] = le_model.fit_transform(df_used['Model'])
     df_used_encoded['Category_encoded'] = le_category.fit_transform(df_used['Kategori'])
     df_used_encoded['Format_encoded'] = le_format.fit_transform(df_used['Format'])
 
     X_used = df_used_encoded[features]
     y_used = df_used_encoded['Harga']
 
-    # Scale features before splitting (changed to match ML-only version)
+    # Scale features
     scaler_new = StandardScaler()
     scaler_used = StandardScaler()
     X_new_scaled = scaler_new.fit_transform(X_new)
     X_used_scaled = scaler_used.fit_transform(X_used)
 
-    # Split scaled data
-    X_new_train, X_new_test, y_new_train, y_new_test = train_test_split(X_new_scaled, y_new, test_size=0.2, random_state=42)
-    X_used_train, X_used_test, y_used_train, y_used_test = train_test_split(X_used_scaled, y_used, test_size=0.2, random_state=42)
+    # Split data
+    X_train_new, X_test_new, y_train_new, y_test_new = train_test_split(X_new_scaled, y_new, test_size=0.2, random_state=42)
+    X_train_used, X_test_used, y_train_used, y_test_used = train_test_split(X_used_scaled, y_used, test_size=0.2, random_state=42)
 
-    # Train models with same parameters as ML-only version
+    # Train models
     model_new = xgb.XGBRegressor(
         n_estimators=200,
         learning_rate=0.1,
@@ -110,25 +110,21 @@ def train_models(df):
     )
 
     # Fit models
-    model_new.fit(X_new_train, y_new_train)
-    model_used.fit(X_used_train, y_used_train)
+    model_new.fit(X_train_new, y_train_new)
+    model_used.fit(X_train_used, y_train_used)
 
     # Calculate metrics
-    y_new_pred = model_new.predict(X_new_test)
-    new_metrics = {
-        'MAPE': mean_absolute_percentage_error(y_new_test, y_new_pred),
-        'MAE': mean_absolute_error(y_new_test, y_new_pred),
-        'RMSE': np.sqrt(mean_squared_error(y_new_test, y_new_pred)),
-        'R2': r2_score(y_new_test, y_new_pred)
-    }
+    y_pred_new = model_new.predict(X_test_new)
+    mape_new = np.mean(np.abs((y_test_new - y_pred_new) / y_test_new)) * 100
+    mae_new = mean_absolute_error(y_test_new, y_pred_new)
+    rmse_new = np.sqrt(mean_squared_error(y_test_new, y_pred_new))
+    r2_new = r2_score(y_test_new, y_pred_new)
 
-    y_used_pred = model_used.predict(X_used_test)
-    used_metrics = {
-        'MAPE': mean_absolute_percentage_error(y_used_test, y_used_pred),
-        'MAE': mean_absolute_error(y_used_test, y_used_pred),
-        'RMSE': np.sqrt(mean_squared_error(y_used_test, y_used_pred)),
-        'R2': r2_score(y_used_test, y_used_pred)
-    }
+    y_pred_used = model_used.predict(X_test_used)
+    mape_used = np.mean(np.abs((y_test_used - y_pred_used) / y_test_used)) * 100
+    mae_used = mean_absolute_error(y_test_used, y_pred_used)
+    rmse_used = np.sqrt(mean_squared_error(y_test_used, y_pred_used))
+    r2_used = r2_score(y_test_used, y_pred_used)
 
     return {
         'model_new': model_new,
@@ -136,12 +132,22 @@ def train_models(df):
         'scaler_new': scaler_new,
         'scaler_used': scaler_used,
         'le_brand': le_brand,
-        'le_model': le_model,  # Added Model encoder to return dict
+        'le_model': le_model,
         'le_category': le_category,
         'le_format': le_format,
         'features': features,
-        'new_metrics': new_metrics,
-        'used_metrics': used_metrics
+        'metrics_new': {
+            'MAPE': mape_new,
+            'MAE': mae_new,
+            'RMSE': rmse_new,
+            'R2': r2_new
+        },
+        'metrics_used': {
+            'MAPE': mape_used,
+            'MAE': mae_used,
+            'RMSE': rmse_used,
+            'R2': r2_used
+        }
     }
     
 df = load_data()
@@ -402,34 +408,26 @@ else:
     st.title("Prediksi Harga Kamera")
     st.markdown("---")
 
+    df = load_data()
+    models_data = train_models(df)
+
     # Input form
     col1, col2 = st.columns(2)
 
     with col1:
-        brand = st.selectbox("Merek", df['Merek'].unique())  # Removed sorting to match ML-only version
-        model = st.selectbox("Model", df[df['Merek'] == brand]['Model'].unique())  # Added Model selection
-        category = st.selectbox("Kategori", df['Kategori'].unique())
-        condition = st.selectbox("Kondisi", df['Kondisi'].unique())
-        format_type = st.selectbox("Format", df['Format'].unique())
+        brand = st.selectbox("Merek", [""] + list(df['Merek'].unique()))
+        models_for_brand = [""] if brand == "" else list(df[df['Merek'] == brand]['Model'].unique())
+        model = st.selectbox("Model", models_for_brand)
 
     with col2:
-        megapixels = st.selectbox("Jumlah Piksel (MP)", 
-                                 df['Jumlah piksel'].unique())
-        iso_min = st.selectbox("ISO Minimum",
-                              df['ISO min'].unique())
-        iso_max = st.selectbox("ISO Maximum",
-                              df['ISO max'].unique())
-        fps = st.selectbox("FPS",
-                          df['fps'].unique())
-        year = st.selectbox("Tahun Rilis",
-                           df['Tahun Rilis'].unique())
+        condition = st.selectbox("Kondisi", [""] + list(df['Kondisi'].unique()))
 
     if st.button("Prediksi Harga"):
-        # Calculate derived features
-        current_year = datetime.now().year
-        camera_age = current_year - year
-        iso_range = iso_max - iso_min
-        price_per_mp = 0  # Will be updated after prediction
+        if not all([brand, model, condition]):
+            st.warning("Mohon isi semua field yang diperlukan untuk prediksi")
+            st.stop()
+            
+        camera_data = df[df['Model'] == model].iloc[0]
 
         # Create input data with Model encoding
         input_data = pd.DataFrame({
@@ -484,16 +482,20 @@ else:
             st.metric("R²", f"{metrics['R2']:.3f}")
             st.caption("Coefficient of Determination")
 
-        # Show similar cameras
         st.subheader("Kamera Similar")
+        price_range = (predicted_price * 0.8, predicted_price * 1.2)
         similar_cameras = df[
-            (df['Merek'] == brand) &
-            (df['Kategori'] == category) &
-            (df['Kondisi'] == condition)
-        ].head()
+            (df['Kondisi'] == condition) &
+            (df['Kategori'] == camera_data['Kategori']) &
+            (df['Model'] != model) &  # Exclude the selected model
+            (df['Harga'].between(*price_range))  # Filter by similar price range
+        ].drop_duplicates(subset=['Model'])
 
         if not similar_cameras.empty:
-            st.dataframe(similar_cameras[['Model', 'Harga', 'Jumlah piksel', 'Tahun Rilis']])
+            # Sort by price similarity to predicted price
+            similar_cameras['price_diff'] = abs(similar_cameras['Harga'] - predicted_price)
+            similar_cameras = similar_cameras.sort_values('price_diff').head(5)  # Show top 5 most similar
+            st.dataframe(similar_cameras[['Model', 'Merek', 'Harga', 'Jumlah piksel', 'Tahun Rilis']])
         else:
             st.info("Tidak ditemukan kamera dengan harga serupa dalam database")
 
