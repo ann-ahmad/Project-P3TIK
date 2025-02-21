@@ -189,6 +189,11 @@ if page == "Dashboard":
         st.metric("Harga Terendah Kamera Baru", f"Rp{min_new:,.0f}".replace(',', '.'))
         st.metric("Harga Terendah Kamera Bekas", f"Rp{min_used:,.0f}".replace(',', '.'))
 
+    # Fungsi untuk membuat dan menampilkan chart dengan ID unik
+    def create_and_show_chart(fig, container, idx):
+    fig.update_layout(height=400)  # Menyamakan tinggi semua chart
+    container.plotly_chart(fig, use_container_width=True, key=f"chart_{idx}")
+    
     # Analysis Tabs
     st.subheader("Analisis Data Kamera")
     tabs = st.tabs([
@@ -209,7 +214,7 @@ if page == "Dashboard":
                              title='Rata-rata Harga Kamera Baru per Merek',
                              text=avg_price_new['Harga'].apply(lambda x: f"Rp{x:,.0f}".replace(',', '.')))
             fig_new.update_traces(textposition='outside')
-            st.plotly_chart(fig_new, use_container_width=True)
+            create_and_show_chart(fig_new, col1, "new_price_brand")   
 
         with col2:
             # Distribution for used cameras
@@ -218,7 +223,7 @@ if page == "Dashboard":
                               title='Rata-rata Harga Kamera Bekas per Merek',
                               text=avg_price_used['Harga'].apply(lambda x: f"Rp{x:,.0f}".replace(',', '.')))
             fig_used.update_traces(textposition='outside')
-            st.plotly_chart(fig_used, use_container_width=True)
+            create_and_show_chart(fig_used, col2, "used_price_brand")
             
         st.subheader("Distribusi Harga berdasarkan Tahun Rilis")
         
@@ -232,13 +237,13 @@ if page == "Dashboard":
             fig_year_new = px.line(year_price_new, x='Tahun Rilis', y='Harga',
                                    title='Trend Harga Rata-rata Kamera Baru per Tahun',
                                    markers=True)
-            st.plotly_chart(fig_year_new, use_container_width=True)
+            create_and_show_chart(fig_year_new, col1, "new_price_year")
                 
         with col2:
             fig_year_used = px.line(year_price_used, x='Tahun Rilis', y='Harga',
                                     title='Trend Harga Rata-rata Kamera Bekas per Tahun',
                                     markers=True)
-            st.plotly_chart(fig_year_used, use_container_width=True)
+            create_and_show_chart(fig_year_used, col2, "used_price_year")
             
         st.subheader("Distribusi Harga berdasarkan Format Kamera")
         col1, col2 = st.columns(2)
@@ -249,7 +254,7 @@ if page == "Dashboard":
                                     title='Rata-rata Harga Kamera Baru per Format',
                                     text=format_price_new['Harga'].apply(lambda x: f"Rp{x:,.0f}".replace(',', '.')))
             fig_format_new.update_traces(textposition='outside')
-            st.plotly_chart(fig_format_new, use_container_width=True)
+            create_and_show_chart(fig_format_new, col1, "new_price_format")
                 
         with col2:
             format_price_used = df[df['Kondisi'] == 'Bekas'].groupby('Format')['Harga'].mean().reset_index()
@@ -257,7 +262,7 @@ if page == "Dashboard":
                                      title='Rata-rata Harga Kamera Bekas per Format',
                                      text=format_price_used['Harga'].apply(lambda x: f"Rp{x:,.0f}".replace(',', '.')))
             fig_format_used.update_traces(textposition='outside')
-            st.plotly_chart(fig_format_used, use_container_width=True)
+            create_and_show_chart(fig_format_used, col2, "used_price_format")
             
         st.subheader("Top 10 Kamera Termahal")
         col1, col2 = st.columns(2)
@@ -268,7 +273,7 @@ if page == "Dashboard":
                                  title='10 Kamera Baru Termahal',
                                  text=top_new['Harga'].apply(lambda x: f"Rp{x:,.0f}".replace(',', '.')))
             fig_top_new.update_traces(textposition='outside')
-            st.plotly_chart(fig_top_new, use_container_width=True)
+            create_and_show_chart(fig_top_new, col1, "top_10_new")
                 
         with col2:
             top_used = df[df['Kondisi'] == 'Bekas'].nlargest(10, 'Harga')
@@ -276,7 +281,7 @@ if page == "Dashboard":
                                   title='10 Kamera Bekas Termahal',
                                   text=top_used['Harga'].apply(lambda x: f"Rp{x:,.0f}".replace(',', '.')))
             fig_top_used.update_traces(textposition='outside')
-            st.plotly_chart(fig_top_used, use_container_width=True)
+            create_and_show_chart(fig_top_used, col2, "top_10_used")
 
     # Tab 2: Popularitas dan Tren Kamera
     with tabs[1]:
@@ -289,7 +294,7 @@ if page == "Dashboard":
         fig_top_brands = px.bar(top_brands, x='Merek', y='Model',
                                 color='Tahun Rilis',
                                 title='10 Merek dengan Model Terbanyak per Tahun')
-        st.plotly_chart(fig_top_brands, use_container_width=True)
+        create_and_show_chart(fig_top_brands, st, "top_brands_by_year")
         
         st.subheader("Distribusi Model Kamera Berdasarkan Tahun Rilis")
         
@@ -301,7 +306,7 @@ if page == "Dashboard":
                                 x='Tahun Rilis', y='Jumlah Model',
                                 title='Jumlah Model Kamera yang Dirilis per Tahun',
                                 markers=True)
-        st.plotly_chart(fig_year_dist, use_container_width=True)
+        create_and_show_chart(fig_year_dist, st, "models_by_year")
         
 
     # Tab 3: Analisis Merek dan Kategori
@@ -314,14 +319,14 @@ if page == "Dashboard":
             fig_brand_new = px.pie(values=brand_new.values,
                                    names=brand_new.index,
                                    title='Distribusi Merek Kamera Baru')
-            st.plotly_chart(fig_brand_new, use_container_width=True)
+            create_and_show_chart(fig_brand_new, col1, "brand_dist_new")
 
         with col2:
             brand_used = df[df['Kondisi'] == 'Bekas']['Merek'].value_counts()
             fig_brand_used = px.pie(values=brand_used.values,
                                     names=brand_used.index,
                                     title='Distribusi Merek Kamera Bekas')
-            st.plotly_chart(fig_brand_used, use_container_width=True)
+            create_and_show_chart(fig_brand_used, col2, "brand_dist_used")
         
         st.subheader("Proporsi Kategori Kamera")
         col1, col2 = st.columns(2)
@@ -331,33 +336,25 @@ if page == "Dashboard":
             fig_cat_new = px.pie(values=cat_new.values,
                                  names=cat_new.index,
                                  title='Proporsi Kategori Kamera Baru')
-            st.plotly_chart(fig_cat_new, use_container_width=True)
+            create_and_show_chart(fig_cat_new, col1, "cat_dist_new")
             
         with col2:
             cat_used = df[df['Kondisi'] == 'Bekas']['Kategori'].value_counts()
             fig_cat_used = px.pie(values=cat_used.values,
                                   names=cat_used.index,
                                   title='Proporsi Kategori Kamera Bekas')
-            st.plotly_chart(fig_cat_used, use_container_width=True)
+            create_and_show_chart(fig_cat_used, col2, "cat_dist_used")
             
         st.subheader("Rata-rata Harga Kamera Per Merek")
-        col1, col2 = st.columns(2)
+        avg_price = df.groupby(['Merek', 'Kondisi'])['Harga'].mean().reset_index()
             
-        with col1:
-            avg_price_new = df[df['Kondisi'] == 'Baru'].groupby('Merek')['Harga'].mean().reset_index()
-            fig_avg_new = px.bar(avg_price_new, x='Merek', y='Harga',
-                                 title='Rata-rata Harga Kamera Baru per Merek',
-                                 text=avg_price_new['Harga'].apply(lambda x: f"Rp{x:,.0f}".replace(',', '.')))
-            fig_avg_new.update_traces(textposition='outside')
-            st.plotly_chart(fig_avg_new, use_container_width=True)
-                
-        with col2:
-            avg_price_used = df[df['Kondisi'] == 'Bekas'].groupby('Merek')['Harga'].mean().reset_index()
-            fig_avg_used = px.bar(avg_price_used, x='Merek', y='Harga',
-                                  title='Rata-rata Harga Kamera Bekas per Merek',
-                                  text=avg_price_used['Harga'].apply(lambda x: f"Rp{x:,.0f}".replace(',', '.')))
-            fig_avg_used.update_traces(textposition='outside')
-            st.plotly_chart(fig_avg_used, use_container_width=True)
+        fig_avg = px.bar(avg_price, x='Merek', y='Harga',
+                         color='Kondisi',
+                         barmode='group',
+                         title='Perbandingan Rata-rata Harga Kamera per Merek',
+                         text=avg_price['Harga'].apply(lambda x: f"Rp{x:,.0f}".replace(',', '.')))
+        fig_avg.update_traces(textposition='outside')
+        create_and_show_chart(fig_avg, st, "avg_price_comparison")
 
     # Tab 4: Analisis Kamera Bekas vs Baru
     with tabs[3]:
@@ -386,7 +383,7 @@ if page == "Dashboard":
         fig_year_compare = px.line(year_price, x='Tahun Rilis', y='Harga',
                                    color='Kondisi', title='Trend Harga Rata-rata per Tahun',
                                    markers=True)
-        st.plotly_chart(fig_year_compare, use_container_width=True)
+        create_and_show_chart(fig_year_compare, st, "year_price_comparison")
         
         # Brand distribution comparison
         st.subheader("Perbandingan Distribusi Merek")
@@ -396,7 +393,7 @@ if page == "Dashboard":
         }).fillna(0)
         fig_brand_compare = px.bar(brand_dist, barmode='group',
                                    title='Perbandingan Jumlah Model per Merek')
-        st.plotly_chart(fig_brand_compare, use_container_width=True)
+        create_and_show_chart(fig_brand_compare, st, "brand_model_comparison")
 
 else:
     st.image("https://i.pinimg.com/1200x/2c/64/d2/2c64d2b0c32c1d17bf8f87863b34d367.jpg", width=64)
