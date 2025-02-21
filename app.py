@@ -118,7 +118,7 @@ def train_models(df):
     new_metrics = {
         'MAPE': mean_absolute_percentage_error(y_new_test, y_new_pred),
         'MAE': mean_absolute_error(y_new_test, y_new_pred),
-        'MSE': mean_squared_error(y_new_test, y_new_pred),
+        'RMSE': np.sqrt(mean_squared_error(y_new_test, y_new_pred)),
         'R2': r2_score(y_new_test, y_new_pred)
     }
 
@@ -126,7 +126,7 @@ def train_models(df):
     used_metrics = {
         'MAPE': mean_absolute_percentage_error(y_used_test, y_used_pred),
         'MAE': mean_absolute_error(y_used_test, y_used_pred),
-        'MSE': mean_squared_error(y_used_test, y_used_pred),
+        'RMSE': np.sqrt(mean_squared_error(y_used_test, y_used_pred)),
         'R2': r2_score(y_used_test, y_used_pred)
     }
 
@@ -335,9 +335,9 @@ else:
             st.metric("MAE", f"Rp{metrics['MAE']:,.0f}".replace(',', '.'))
             st.caption("Mean Absolute Error")
         with col3:
-            mse_millions = metrics['MSE'] / 1_000_000
-            st.metric("MSE", f"{mse_millions:.1f}M")
-            st.caption("Mean Squared Error")
+            rmse_millions = metrics['RMSE'] / 1_000_000
+            st.metric("RMSE", f"{rmse_millions:.1f}M")
+            st.caption("Root Mean Squared Error")
         with col4:
             st.metric("R²", f"{metrics['R2']:.3f}")
             st.caption("Coefficient of Determination")
