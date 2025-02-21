@@ -31,78 +31,117 @@ def load_data():
 
 @st.cache_resource
 def train_models(df):
+    # Calculate camera age
+    current_year = datetime.now().year
+    df['Umur Kamera'] = current_year - df['Tahun Rilis']
+
+    # Add price per megapixel feature
+    df['Harga per Megapixel'] = df['Harga'] / df['Jumlah piksel']
+
+    # Add ISO range feature
+    df['ISO Range'] = df['ISO max'] - df['ISO min']
+
     # Split data by condition
     df_new = df[df['Kondisi'] == 'Baru']
     df_used = df[df['Kondisi'] == 'Bekas']
-    
-    # Create encoders
-    le_model = LabelEncoder()
-    
+
+    # Create label encoders
+    le_brand = LabelEncoder()
+    le_model = LabelEncoder()  # Added Model encoder
+    le_category = LabelEncoder()
+    le_format = LabelEncoder()
+
+    # Updated features list to match ML-only version
+    features = [
+        'Brand_encoded', 'Model_encoded', 'Category_encoded',  # Added Model_encoded
+        'Jumlah piksel', 'ISO min', 'ISO max', 'ISO Range',
+        'fps', 'Format_encoded', 'Tahun Rilis', 'Umur Kamera',
+        'Harga per Megapixel'
+    ]
+
     # Process new cameras data
     df_new_encoded = df_new.copy()
-    df_new_encoded['Model_encoded'] = le_model.fit_transform(df_new['Model'])
-    
-    X_new = df_new_encoded[['Model_encoded']]
+    df_new_encoded['Brand_encoded'] = le_brand.fit_transform(df_new['Merek'])
+    df_new_encoded['Model_encoded'] = le_model.fit_transform(df_new['Model'])  # Added Model encoding
+    df_new_encoded['Category_encoded'] = le_category.fit_transform(df_new['Kategori'])
+    df_new_encoded['Format_encoded'] = le_format.fit_transform(df_new['Format'])
+
+    X_new = df_new_encoded[features]
     y_new = df_new_encoded['Harga']
-    
+
     # Process used cameras data
     df_used_encoded = df_used.copy()
-    df_used_encoded['Model_encoded'] = le_model.fit_transform(df_used['Model'])
-    
-    X_used = df_used_encoded[['Model_encoded']]
+    df_used_encoded['Brand_encoded'] = le_brand.fit_transform(df_used['Merek'])
+    df_used_encoded['Model_encoded'] = le_model.fit_transform(df_used['Model'])  # Added Model encoding
+    df_used_encoded['Category_encoded'] = le_category.fit_transform(df_used['Kategori'])
+    df_used_encoded['Format_encoded'] = le_format.fit_transform(df_used['Format'])
+
+    X_used = df_used_encoded[features]
     y_used = df_used_encoded['Harga']
-    
-    # Split data untuk training dan testing
-    X_new_train, X_new_test, y_new_train, y_new_test = train_test_split(
-        X_new, y_new, test_size=0.2, random_state=42
-    )
-    X_used_train, X_used_test, y_used_train, y_used_test = train_test_split(
-        X_used, y_used, test_size=0.2, random_state=42
-    )
-    
-    # Train models
+
+    # Scale features before splitting (changed to match ML-only version)
+    scaler_new = StandardScaler()
+    scaler_used = StandardScaler()
+    X_new_scaled = scaler_new.fit_transform(X_new)
+    X_used_scaled = scaler_used.fit_transform(X_used)
+
+    # Split scaled data
+    X_new_train, X_new_test, y_new_train, y_new_test = train_test_split(X_new_scaled, y_new, test_size=0.2, random_state=42)
+    X_used_train, X_used_test, y_used_train, y_used_test = train_test_split(X_used_scaled, y_used, test_size=0.2, random_state=42)
+
+    # Train models with same parameters as ML-only version
     model_new = xgb.XGBRegressor(
-        n_estimators=50,
+        n_estimators=200,
         learning_rate=0.1,
-        max_depth=3,
+        max_depth=6,
+        min_child_weight=1,
+        subsample=0.8,
+        colsample_bytree=0.8,
         random_state=42
     )
-    
     model_used = xgb.XGBRegressor(
-        n_estimators=50,
+        n_estimators=200,
         learning_rate=0.1,
-        max_depth=3,
+        max_depth=6,
+        min_child_weight=1,
+        subsample=0.8,
+        colsample_bytree=0.8,
         random_state=42
     )
-    
+
     # Fit models
     model_new.fit(X_new_train, y_new_train)
     model_used.fit(X_used_train, y_used_train)
-    
-    # Calculate metrics for both models
-    def calculate_metrics(model, X_test, y_test):
-        y_pred = model.predict(X_test)
-        return {
-            'MAPE': mean_absolute_percentage_error(y_test, y_pred),
-            'MAE': mean_absolute_error(y_test, y_pred),
-            'RMSE': np.sqrt(mean_squared_error(y_test, y_pred)),
-            'R2': r2_score(y_test, y_pred)
-        }
-    
-    metrics_new = calculate_metrics(model_new, X_new_test, y_new_test)
-    metrics_used = calculate_metrics(model_used, X_used_test, y_used_test)
-    
+
+    # Calculate metrics
+    y_new_pred = model_new.predict(X_new_test)
+    new_metrics = {
+        'MAPE': mean_absolute_percentage_error(y_new_test, y_new_pred),
+        'MAE': mean_absolute_error(y_new_test, y_new_pred),
+        'RMSE': np.sqrt(mean_squared_error(y_new_test, y_new_pred)),
+        'R2': r2_score(y_new_test, y_new_pred)
+    }
+
+    y_used_pred = model_used.predict(X_used_test)
+    used_metrics = {
+        'MAPE': mean_absolute_percentage_error(y_used_test, y_used_pred),
+        'MAE': mean_absolute_error(y_used_test, y_used_pred),
+        'RMSE': np.sqrt(mean_squared_error(y_used_test, y_used_pred)),
+        'R2': r2_score(y_used_test, y_used_pred)
+    }
+
     return {
         'model_new': model_new,
         'model_used': model_used,
-        'le_model': le_model,
-        'metrics_new': metrics_new,
-        'metrics_used': metrics_used,
-        # Tambahkan data test untuk validasi prediksi
-        'test_data': {
-            'new': (X_new_test, y_new_test),
-            'used': (X_used_test, y_used_test)
-        }
+        'scaler_new': scaler_new,
+        'scaler_used': scaler_used,
+        'le_brand': le_brand,
+        'le_model': le_model,  # Added Model encoder to return dict
+        'le_category': le_category,
+        'le_format': le_format,
+        'features': features,
+        'new_metrics': new_metrics,
+        'used_metrics': used_metrics
     }
     
 df = load_data()
@@ -386,81 +425,77 @@ else:
                            df['Tahun Rilis'].unique())
 
     if st.button("Prediksi Harga"):
-        if model:
-            model_encoded = models_data['le_model'].transform([model])
-            
-            if condition == 'Baru':
-                predictor = models_data['model_new']
-                metrics = models_data['metrics_new']
-                X_test, y_test = models_data['test_data']['new']
-            else:
-                predictor = models_data['model_used']
-                metrics = models_data['metrics_used']
-                X_test, y_test = models_data['test_data']['used']
-                
-            predicted_price = predictor.predict([[model_encoded[0]]])[0]
-            
-            st.success(f"Prediksi Harga: {format_price(predicted_price)}")
-            
-            st.subheader("Metrik Evaluasi Model")
-            col1, col2, col3, col4 = st.columns(4)
-            
-            with col1:
-                st.metric("MAPE", f"{metrics['MAPE']*100:.2f}%")
-                st.caption("Mean Absolute Percentage Error")
-            with col2:
-                st.metric("MAE", f"Rp{metrics['MAE']:,.0f}".replace(',', '.'))
-                st.caption("Mean Absolute Error")
-            with col3:
-                rmse_millions = metrics['RMSE'] / 1_000_000
-                st.metric("RMSE", f"Rp{rmse_millions:.1f}M")
-                st.caption("Root Mean Squared Error")
-            with col4:
-                st.metric("R²", f"{metrics['R2']:.3f}")
-                st.caption("Coefficient of Determination")
-                
-            similar_models = df[
-                (df['Kondisi'] == condition) &
-                (df['Merek'] == model_data['Merek']) &
-                (df['Kategori'] == model_data['Kategori']) &
-                (abs(df['Tahun Rilis'] - model_data['Tahun Rilis']) <= 2)
-            ]
-            
-            if len(similar_models) > 0:
-                similar_encoded = models_data['le_model'].transform(similar_models['Model'])
-                similar_predictions = predictor.predict(similar_encoded.reshape(-1, 1))
-                
-                local_metrics = {
-                    'MAPE': mean_absolute_percentage_error(similar_models['Harga'], similar_predictions),
-                    'MAE': mean_absolute_error(similar_models['Harga'], similar_predictions),
-                    'RMSE': np.sqrt(mean_squared_error(similar_models['Harga'], similar_predictions)),
-                    'R2': r2_score(similar_models['Harga'], similar_predictions)
-                }
-                
-                st.subheader("Metrik untuk Kamera Similar")
-                col1, col2, col3, col4 = st.columns(4)
-                
-                with col1:
-                    st.metric("MAPE Lokal", f"{local_metrics['MAPE']*100:.2f}%")
-                with col2:
-                    st.metric("MAE Lokal", f"Rp{local_metrics['MAE']:,.0f}".replace(',', '.'))
-                with col3:
-                    rmse_millions = local_metrics['RMSE'] / 1_000_000
-                    st.metric("RMSE Lokal", f"Rp{rmse_millions:.1f}M")
-                with col4:
-                    st.metric("R² Lokal", f"{local_metrics['R2']:.3f}")
+        # Calculate derived features
+        current_year = datetime.now().year
+        camera_age = current_year - year
+        iso_range = iso_max - iso_min
+        price_per_mp = 0  # Will be updated after prediction
+
+        # Create input data with Model encoding
+        input_data = pd.DataFrame({
+            'Brand_encoded': [models_data['le_brand'].transform([brand])[0]],
+            'Model_encoded': [models_data['le_model'].transform([model])[0]],  # Added Model encoding
+            'Category_encoded': [models_data['le_category'].transform([category])[0]],
+            'Jumlah piksel': [megapixels],
+            'ISO min': [iso_min],
+            'ISO max': [iso_max],
+            'ISO Range': [iso_range],
+            'fps': [fps],
+            'Format_encoded': [models_data['le_format'].transform([format_type])[0]],
+            'Tahun Rilis': [year],
+            'Umur Kamera': [camera_age],
+            'Harga per Megapixel': [price_per_mp]
+        })
+
+        # Select appropriate model and scaler
+        if condition == 'Baru':
+            model = models_data['model_new']
+            scaler = models_data['scaler_new']
+            metrics = models_data['new_metrics']
+        else:
+            model = models_data['model_used']
+            scaler = models_data['scaler_used']
+            metrics = models_data['used_metrics']
+
+        # Scale input data
+        input_scaled = scaler.transform(input_data[models_data['features']])
+
+        # Make prediction and ensure non-negative
+        predicted_price = max(0, model.predict(input_scaled)[0])  # Added max(0, ...) to prevent negative prices
+
+        # Display prediction
+        st.success(f"Prediksi Harga: {format_price(predicted_price)}")
+
+        # Display model metrics
+        st.subheader("Metrik Performa Model")
+        col1, col2, col3, col4 = st.columns(4)
         
-            # Display similar cameras
-            st.subheader("Kamera Similar")
-            similar_cameras = similar_models[similar_models['Model'] != model].sort_values('Harga')
-            
-            if not similar_cameras.empty:
-                st.dataframe(
-                    similar_cameras[['Model', 'Kategori', 'Tahun Rilis', 'Harga']]
-                    .head()
-                )
-            else:
-                st.info("Tidak ditemukan kamera dengan spesifikasi serupa dalam database")
+        with col1:
+            st.metric("MAPE", f"{metrics['MAPE']*100:.2f}%")
+            st.caption("Mean Absolute Percentage Error")
+        with col2:
+            st.metric("MAE", f"Rp{metrics['MAE']:,.0f}".replace(',', '.'))
+            st.caption("Mean Absolute Error")
+        with col3:
+            rmse_millions = metrics['RMSE'] / 1_000_000
+            st.metric("RMSE", f"Rp{rmse_millions:.1f}M")
+            st.caption("Root Mean Squared Error")
+        with col4:
+            st.metric("R²", f"{metrics['R2']:.3f}")
+            st.caption("Coefficient of Determination")
+
+        # Show similar cameras
+        st.subheader("Kamera Similar")
+        similar_cameras = df[
+            (df['Merek'] == brand) &
+            (df['Kategori'] == category) &
+            (df['Kondisi'] == condition)
+        ].head()
+
+        if not similar_cameras.empty:
+            st.dataframe(similar_cameras[['Model', 'Harga', 'Jumlah piksel', 'Tahun Rilis']])
+        else:
+            st.info("Tidak ditemukan kamera dengan harga serupa dalam database")
 
 # CSS
 st.markdown("""
