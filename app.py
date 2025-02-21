@@ -470,22 +470,22 @@ else:
         st.success(f"Prediksi Harga: {format_price(predicted_price)}")
 
         # Display model metrics
-        st.subheader("Metrik Performa Model")
-        col1, col2, col3, col4 = st.columns(4)
+        #st.subheader("Metrik Performa Model")
+        #col1, col2, col3, col4 = st.columns(4)
         
-        with col1:
-            st.metric("MAPE", f"{metrics['MAPE']*100:.2f}%")
-            st.caption("Mean Absolute Percentage Error")
-        with col2:
-            st.metric("MAE", f"Rp{metrics['MAE']:,.0f}".replace(',', '.'))
-            st.caption("Mean Absolute Error")
-        with col3:
-            rmse_millions = metrics['RMSE'] / 1_000_000
-            st.metric("RMSE", f"Rp{rmse_millions:.1f}M")
-            st.caption("Root Mean Squared Error")
-        with col4:
-            st.metric("R²", f"{metrics['R2']:.3f}")
-            st.caption("Coefficient of Determination")
+        #with col1:
+            #st.metric("MAPE", f"{metrics['MAPE']*100:.2f}%")
+            #st.caption("Mean Absolute Percentage Error")
+        #with col2:
+            #st.metric("MAE", f"Rp{metrics['MAE']:,.0f}".replace(',', '.'))
+            #st.caption("Mean Absolute Error")
+        #with col3:
+            #rmse_millions = metrics['RMSE'] / 1_000_000
+            #st.metric("RMSE", f"Rp{rmse_millions:.1f}M")
+            #st.caption("Root Mean Squared Error")
+        #with col4:
+            #st.metric("R²", f"{metrics['R2']:.3f}")
+            #st.caption("Coefficient of Determination")
 
         st.subheader("Kamera Similar")
         price_range = (predicted_price * 0.8, predicted_price * 1.2)
