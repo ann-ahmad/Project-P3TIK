@@ -179,15 +179,15 @@ if page == "Dashboard":
     with col2:
         max_new = df[df['Kondisi'] == 'Baru']['Harga'].max()
         max_used = df[df['Kondisi'] == 'Bekas']['Harga'].max()
-        st.metric("Harga Tertinggi Kamera Baru", f"Rp {max_new:,.0f}".replace(',', '.'))
-        st.metric("Harga Tertinggi Kamera Bekas", f"Rp {max_used:,.0f}".replace(',', '.'))
+        st.metric("Harga Tertinggi Kamera Baru", f"Rp{max_new:,.0f}".replace(',', '.'))
+        st.metric("Harga Tertinggi Kamera Bekas", f"Rp{max_used:,.0f}".replace(',', '.'))
 
     # Lowest prices
     with col3:
         min_new = df[df['Kondisi'] == 'Baru']['Harga'].min()
         min_used = df[df['Kondisi'] == 'Bekas']['Harga'].min()
-        st.metric("Harga Terendah Kamera Baru", f"Rp {min_new:,.0f}".replace(',', '.'))
-        st.metric("Harga Terendah Kamera Bekas", f"Rp {min_used:,.0f}".replace(',', '.'))
+        st.metric("Harga Terendah Kamera Baru", f"Rp{min_new:,.0f}".replace(',', '.'))
+        st.metric("Harga Terendah Kamera Bekas", f"Rp{min_used:,.0f}".replace(',', '.'))
 
     # Distribution plots row
     st.subheader("Distribusi dan Perbandingan")
@@ -332,10 +332,11 @@ else:
             st.metric("MAPE", f"{metrics['MAPE']*100:.2f}%")
             st.caption("Mean Absolute Percentage Error")
         with col2:
-            st.metric("MAE", f"Rp {metrics['MAE']:,.0f}")
+            st.metric("MAE", f"Rp{metrics['MAE']:,.0f}".replace(',', '.'))
             st.caption("Mean Absolute Error")
         with col3:
-            st.metric("MSE", f"Rp {metrics['MSE']:,.0f}")
+            mse_millions = metrics['MSE'] / 1_000_000
+            st.metric("MSE", f"{mse_millions:.1f}M")
             st.caption("Mean Squared Error")
         with col4:
             st.metric("R²", f"{metrics['R2']:.3f}")
